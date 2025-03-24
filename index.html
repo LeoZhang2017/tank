@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Tank Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="score">Score: <span id="score-value">0</span></div>
+        <div id="health">Health: <span id="health-value">100</span></div>
+        <div id="game-over" class="hidden">
+            <h2>Game Over</h2>
+            <p>Your final score: <span id="final-score">0</span></p>
+            <button id="restart-button">Play Again</button>
+        </div>
+    </div>
+
+    <!-- Three.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    
+    <!-- For loading 3D models -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
+    
+    <!-- For first-person controls -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/PointerLockControls.js"></script>
+    
+    <!-- Game scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/models/Tank.js"></script>
+    <script src="js/models/Enemy.js"></script>
+    <script src="js/models/Projectile.js"></script>
+    <script src="js/models/Terrain.js"></script>
+    <script src="js/Game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html> 
