@@ -14,6 +14,7 @@ class Tank {
         this.projectiles = [];
         this.isDestroyed = false;
         this.game = game; // Store reference to the game instance
+        this.damage = 25; // Base damage for projectiles
         
         // Tank body group
         this.tank = new THREE.Group();
@@ -166,30 +167,49 @@ class Tank {
         
         // Handle player movement
         if (this.isPlayer) {
+            let didMove = false;
             // Forward/backward movement
             if (this.movement.forward) {
                 this.tank.translateZ(this.speed * deltaTime);
+                didMove = true;
             }
             if (this.movement.backward) {
                 this.tank.translateZ(-this.speed * 0.6 * deltaTime); // Slower in reverse
+                didMove = true;
             }
             
             // Left/right rotation (tank body)
             if (this.movement.left) {
                 this.tank.rotateY(this.turnSpeed * deltaTime);
+                didMove = true;
             }
             if (this.movement.right) {
                 this.tank.rotateY(-this.turnSpeed * deltaTime);
+                didMove = true;
             }
             
             // Turret rotation independent of tank body
             if (this.movement.turretLeft) {
                 this.turret.rotateY(this.turnSpeed * 1.5 * deltaTime);
                 this.cannon.rotateY(this.turnSpeed * 1.5 * deltaTime);
+                didMove = true;
             }
             if (this.movement.turretRight) {
                 this.turret.rotateY(-this.turnSpeed * 1.5 * deltaTime);
                 this.cannon.rotateY(-this.turnSpeed * 1.5 * deltaTime);
+                didMove = true;
+            }
+            
+            // Log movement approximately every 30 frames
+            if (Math.random() < 0.03) {
+                console.log("Tank movement state:", {
+                    position: this.tank.position.clone(),
+                    forward: this.movement.forward,
+                    backward: this.movement.backward,
+                    left: this.movement.left,
+                    right: this.movement.right,
+                    moved: didMove
+                });
             }
         } else {
             // Enemy AI logic will be implemented here
@@ -276,7 +296,8 @@ class Tank {
                 worldPos,
                 direction,
                 this.isPlayer,
-                this.game
+                this.game,
+                this.damage
             );
             
             this.projectiles.push(projectile);
@@ -318,7 +339,8 @@ class Tank {
                 worldPos.clone(),
                 direction.clone(),
                 this.isPlayer,
-                this.game
+                this.game,
+                this.damage
             );
             
             this.projectiles.push(projectile);

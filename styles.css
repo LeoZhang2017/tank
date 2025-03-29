@@ -16,15 +16,39 @@ body {
     height: 100vh;
 }
 
+/* UI elements for game info */
+.game-ui {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 10px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.ui-element {
+    padding: 10px 15px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 18px;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
 #score, #health {
     position: absolute;
     top: 20px;
     padding: 10px;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.7);
     color: white;
     font-size: 18px;
     border-radius: 5px;
     z-index: 10;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 #score {
@@ -33,6 +57,60 @@ body {
 
 #health {
     right: 20px;
+}
+
+/* Coin counter styling */
+.coin-counter {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(255, 215, 0, 0.3);
+    border: 1px solid rgba(255, 215, 0, 0.5);
+    color: #FFD700;
+    font-weight: bold;
+    z-index: 10;
+}
+
+/* Power level indicator */
+.power-level {
+    position: absolute;
+    top: 20px;
+    right: 150px;
+    background-color: rgba(255, 0, 0, 0.3);
+    border: 1px solid rgba(255, 0, 0, 0.5);
+    color: #FF9500;
+    font-weight: bold;
+    z-index: 10;
+}
+
+/* Power-up indicator */
+.power-up-indicator {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(255, 165, 0, 0.8);
+    border: 2px solid #FFA500;
+    color: white;
+    padding: 15px 20px;
+    font-size: 20px;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+    z-index: 10;
+    animation: pulsate 1.5s infinite alternate;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(255, 165, 0, 0.6);
+}
+
+/* Pulsate animation for power-up indicator */
+@keyframes pulsate {
+    from {
+        box-shadow: 0 0 10px rgba(255, 165, 0, 0.6);
+    }
+    to {
+        box-shadow: 0 0 25px rgba(255, 165, 0, 0.9);
+    }
 }
 
 #game-over {
@@ -97,4 +175,134 @@ body {
     left: 9px;
     width: 2px;
     height: 20px;
+}
+
+/* Start message styles */
+.start-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 30px;
+    border-radius: 8px;
+    text-align: center;
+    z-index: 1000;
+    border: 2px solid #4CAF50;
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.6);
+    pointer-events: none;
+    max-width: 500px;
+    width: 90%;
+}
+
+.start-message h2 {
+    font-size: 28px;
+    margin-bottom: 15px;
+    color: #4CAF50;
+    text-shadow: 0 0 5px rgba(76, 175, 80, 0.8);
+}
+
+.controls-info {
+    font-size: 16px;
+    text-align: left;
+}
+
+.controls-info p {
+    margin-bottom: 10px;
+}
+
+.controls-info ul {
+    list-style-type: none;
+    padding-left: 10px;
+    margin-top: 10px;
+}
+
+.controls-info li {
+    margin-bottom: 5px;
+    padding-left: 15px;
+    position: relative;
+}
+
+.controls-info li:before {
+    content: "►";
+    position: absolute;
+    left: 0;
+    color: #4CAF50;
+}
+
+.highlight {
+    color: #FFD700;
+    font-weight: bold;
+    font-size: 18px;
+    text-align: center;
+    padding: 10px;
+    border: 1px solid #FFD700;
+    border-radius: 5px;
+    background-color: rgba(255, 215, 0, 0.1);
+    margin: 15px 0;
+}
+
+.blink {
+    animation: blink-animation 1s steps(5, start) infinite;
+    color: #4CAF50;
+    display: inline-block;
+}
+
+@keyframes blink-animation {
+    to {
+        visibility: hidden;
+    }
+}
+
+/* Health bonus container */
+.health-bonus-container {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background-color: rgba(0, 100, 0, 0.3);
+    border: 1px solid rgba(0, 200, 0, 0.5);
+    color: #88FF88;
+    font-weight: bold;
+    z-index: 10;
+    width: 200px;
+    padding: 8px 12px;
+}
+
+/* Progress container styling */
+.progress-container {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+    overflow: hidden;
+    height: 8px;
+    margin-top: 5px;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+/* Health bonus progress bar */
+#health-bonus-progress {
+    height: 100%;
+    background-color: #FF5500;
+    transition: width 0.3s ease-out, background-color 0.5s;
+}
+
+/* Animation for health boost */
+@keyframes healthPulse {
+    0% { 
+        box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        transform: scale(1);
+    }
+    50% { 
+        box-shadow: 0 0 15px rgba(0, 255, 0, 0.8);
+        transform: scale(1.05);
+    }
+    100% { 
+        box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        transform: scale(1);
+    }
+}
+
+/* Apply animation when close to health boost */
+.health-bonus-container.pulse {
+    animation: healthPulse 1.5s infinite;
 } 
