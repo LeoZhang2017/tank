@@ -63,11 +63,19 @@ class Game {
         // Lock pointer for FPS controls
         this.setupControls();
         
-        // Immediately spawn first coin
+        // Make sure initial coins are spawned
         console.log("About to spawn the first coin");
+        
+        // Force immediate spawn of one coin
         setTimeout(() => {
             console.log("Spawning initial coin...");
-            this.spawnCoin();
+            const coin1 = this.spawnCoin();
+            
+            if (coin1) {
+                console.log("First coin created successfully");
+            } else {
+                console.error("Failed to create first coin!");
+            }
             
             // Force multiple coins with delays to ensure there are multiple coins visible
             setTimeout(() => {
@@ -81,9 +89,22 @@ class Game {
                     setTimeout(() => {
                         console.log("Spawning fourth coin...");
                         this.spawnCoin();
-                    }, 750);
-                }, 750);
-            }, 750);
+                        
+                        // Extra safety to ensure coins are visible
+                        setTimeout(() => {
+                            // Log the current state of coins
+                            console.log(`COIN DEBUG: After initial spawns - Coins in array: ${this.coins.length}`);
+                            console.log(`COIN DEBUG: Visible coins: ${this.coins.filter(c => !c.isCollected).length}`);
+                            
+                            // If somehow we still don't have coins, try one more time with different positions
+                            if (this.coins.length < 2) {
+                                console.log("COIN DEBUG: Still insufficient coins after initial spawns, trying again with different logic");
+                                this.forceSpawnCoinsAroundPlayer();
+                            }
+                        }, 1000);
+                    }, 500);
+                }, 500);
+            }, 500);
         }, 500);
         
         console.log("Game initialization completed");
@@ -909,6 +930,11 @@ class Game {
             this.player.update(deltaTime);
         }
         
+        // Update the terrain effects (added for mountain scene)
+        if (this.terrain) {
+            this.terrain.update(deltaTime);
+        }
+        
         // Update enemies
         this.updateEnemies(deltaTime);
         
@@ -1056,9 +1082,12 @@ class Game {
     
     spawnCoin() {
         // Don't spawn more than max coins
-        if (this.coins.length >= this.maxCoins) return;
+        if (this.coins.length >= this.maxCoins) {
+            console.log(`Cannot spawn coin: already at max coins (${this.coins.length}/${this.maxCoins})`);
+            return null;
+        }
         
-        console.log("Attempting to spawn a coin...");
+        console.log(`COIN DEBUG: Attempting to spawn a coin... Current coins: ${this.coins.length}`);
         
         // Find a valid position for the coin (not too close to player or inside obstacles)
         let position;
@@ -1070,7 +1099,7 @@ class Game {
             
             // Generate a random position within the terrain boundaries
             // Use a smaller area than the entire terrain to ensure coins are more visible
-            const boundarySize = this.terrain.boundarySize * 0.7; // 70% of the boundary size for better visibility
+            const boundarySize = this.terrain?.boundarySize ? this.terrain.boundarySize * 0.7 : 100; // 70% of the boundary size for better visibility
             
             // Position coins closer to the player to increase chances of seeing them
             const playerPos = this.player.position;
@@ -1089,7 +1118,7 @@ class Game {
             // Check if it's too close to the player
             const distToPlayer = distance(position, this.player.position);
             if (distToPlayer < 15) {
-                console.log("Position too close to player, retrying...");
+                console.log(`COIN DEBUG: Position too close to player (dist: ${distToPlayer}), retrying...`);
                 continue; // Too close to player
             }
             
@@ -1099,27 +1128,29 @@ class Game {
                 const distToCoin = distance(position, coin.position);
                 if (distToCoin < 5) { // Reduced from 8 to 5 to allow coins to spawn closer together
                     coinCollision = true;
+                    console.log(`COIN DEBUG: Position too close to another coin (dist: ${distToCoin}), retrying...`);
                     break;
                 }
             }
             
             if (coinCollision) {
-                console.log("Position too close to another coin, retrying...");
                 continue; // Too close to another coin
             }
             
             // Check if it's inside any obstacle
             let obstacleCollision = false;
-            for (const obstacle of this.terrain.obstacles) {
-                const distToObstacle = distance(position, obstacle.position);
-                if (distToObstacle < obstacle.radius + 2) {
-                    obstacleCollision = true;
-                    break;
+            if (this.terrain && this.terrain.obstacles) {
+                for (const obstacle of this.terrain.obstacles) {
+                    const distToObstacle = distance(position, obstacle.position);
+                    if (distToObstacle < obstacle.radius + 2) {
+                        obstacleCollision = true;
+                        console.log(`COIN DEBUG: Position overlaps with obstacle (dist: ${distToObstacle}), retrying...`);
+                        break;
+                    }
                 }
             }
             
             if (obstacleCollision) {
-                console.log("Position overlaps with obstacle, retrying...");
                 continue; // Inside an obstacle
             }
             
@@ -1128,7 +1159,7 @@ class Game {
         }
         
         if (!isValidPosition) {
-            console.log("Failed to find valid position for coin after", attempts, "attempts");
+            console.log(`COIN DEBUG: Failed to find valid position for coin after ${attempts} attempts`);
             
             // As a fallback, place the coin in front of the player
             const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.player.tank.quaternion);
@@ -1136,22 +1167,34 @@ class Game {
                 .copy(this.player.position)
                 .add(forward.multiplyScalar(20)); // 20 units in front of player
             
-            console.log("Using fallback position in front of player:", position);
+            console.log(`COIN DEBUG: Using fallback position in front of player: ${position.x.toFixed(2)}, ${position.y.toFixed(2)}, ${position.z.toFixed(2)}`);
         }
         
-        // Create and add the coin
-        console.log("Spawning coin at", position);
-        const coin = new Coin(this.scene, position);
-        this.coins.push(coin);
-        
-        // Force a larger size for better visibility
-        coin.mesh.scale.set(1.5, 1.5, 1.5);
-        coin.radius *= 1.5;
-        
-        // Display a visual indicator at the coin's location
-        this.showCoinSpawnIndicator(position);
-        
-        return coin;
+        try {
+            // Create and add the coin
+            console.log(`COIN DEBUG: Spawning coin at ${position.x.toFixed(2)}, ${position.y.toFixed(2)}, ${position.z.toFixed(2)}`);
+            const coin = new Coin(this.scene, position);
+            this.coins.push(coin);
+            
+            // Force a larger size for better visibility
+            coin.mesh.scale.set(2, 2, 2); // Make coins even larger (was 1.5)
+            coin.radius *= 2; // Update collision radius accordingly (was 1.5)
+            
+            // Make the light stronger
+            if (coin.light) {
+                coin.light.intensity = 1.5; // Increase light intensity
+                coin.light.distance = 8; // Increase light range
+            }
+            
+            // Display a visual indicator at the coin's location
+            this.showCoinSpawnIndicator(position);
+            
+            console.log(`COIN DEBUG: Coin successfully created. Total coins: ${this.coins.length}`);
+            return coin;
+        } catch (error) {
+            console.error(`COIN DEBUG: Error creating coin:`, error);
+            return null;
+        }
     }
     
     // Add a visual indicator when a coin spawns
@@ -1201,14 +1244,30 @@ class Game {
     }
     
     updateCoins(deltaTime) {
+        // Debug output (every 100 frames)
+        if (this.frame % 100 === 0) {
+            console.log(`COIN DEBUG: Current coins in scene: ${this.coins.length} (visible coins: ${this.coins.filter(c => !c.isCollected).length})`);
+        }
+        
         // Update existing coins
         for (let i = this.coins.length - 1; i >= 0; i--) {
             const coin = this.coins[i];
             
-            coin.update(deltaTime);
-            
-            // Remove fully collected coins
-            if (coin.isCollected && Date.now() - coin.collectionTime > coin.collectionAnimationDuration) {
+            try {
+                coin.update(deltaTime);
+                
+                // Remove fully collected coins
+                if (coin.isCollected && Date.now() - coin.collectionTime > coin.collectionAnimationDuration) {
+                    console.log(`COIN DEBUG: Removing collected coin after animation`);
+                    coin.remove(); // Clean up properly
+                    this.coins.splice(i, 1);
+                }
+            } catch (error) {
+                console.error(`COIN DEBUG: Error updating coin:`, error);
+                // Remove problematic coin
+                if (this.coins[i] && this.coins[i].remove) {
+                    this.coins[i].remove();
+                }
                 this.coins.splice(i, 1);
             }
         }
@@ -1216,20 +1275,21 @@ class Game {
         // Check for coin spawning
         this.coinSpawnTimer += deltaTime * 1000;
         if (this.coinSpawnTimer > this.coinSpawnRate) {
+            console.log(`COIN DEBUG: Regular coin spawn timer triggered (${this.coinSpawnTimer.toFixed(0)}ms > ${this.coinSpawnRate}ms)`);
             this.spawnCoin();
             this.coinSpawnTimer = 0;
         }
         
         // Force spawn a coin if there are none in the game and it's been a while since the last spawn
         if (this.coins.length === 0 && this.coinSpawnTimer > this.coinSpawnRate / 2) {
-            console.log("No coins in game - forcing coin spawn");
+            console.log(`COIN DEBUG: No coins in game - forcing coin spawn`);
             this.spawnCoin();
             this.coinSpawnTimer = 0;
         }
         
         // Every now and then, check if we need more coins
-        if (Math.random() < 0.01 && this.coins.length < 3) {
-            console.log("Not enough coins - spawning additional coin");
+        if (Math.random() < 0.01 && this.coins.filter(c => !c.isCollected).length < 3) {
+            console.log(`COIN DEBUG: Not enough coins - spawning additional coin`);
             this.spawnCoin();
         }
     }
@@ -1855,6 +1915,49 @@ class Game {
             uiContainer.appendChild(container);
         } else {
             document.getElementById('game-container').appendChild(container);
+        }
+    }
+    
+    // New method to force spawn coins directly around the player in a circle
+    forceSpawnCoinsAroundPlayer() {
+        console.log("COIN DEBUG: Force spawning coins around player");
+        
+        // Spawn 5 coins in a circle around the player
+        const numCoins = 5;
+        const radius = 20; // Distance from player
+        
+        for (let i = 0; i < numCoins; i++) {
+            const angle = (i / numCoins) * Math.PI * 2;
+            const x = this.player.position.x + Math.cos(angle) * radius;
+            const z = this.player.position.z + Math.sin(angle) * radius;
+            
+            const position = new THREE.Vector3(x, 0, z);
+            
+            console.log(`COIN DEBUG: Placing coin ${i+1} at ${x.toFixed(2)}, 0, ${z.toFixed(2)}`);
+            
+            try {
+                const coin = new Coin(this.scene, position);
+                this.coins.push(coin);
+                
+                // Make it extra visible
+                coin.mesh.scale.set(2.5, 2.5, 2.5);
+                coin.radius *= 2.5;
+                
+                if (coin.light) {
+                    coin.light.intensity = 2.0;
+                    coin.light.distance = 10;
+                }
+                
+                if (coin.pulseLight) {
+                    coin.pulseLight.intensity = 1.5;
+                    coin.pulseLight.distance = 8;
+                }
+                
+                // Show a bigger spawn indicator
+                this.showCoinSpawnIndicator(position);
+            } catch (error) {
+                console.error(`COIN DEBUG: Error creating forced coin:`, error);
+            }
         }
     }
 } 
