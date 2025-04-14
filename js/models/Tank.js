@@ -163,41 +163,66 @@ class Tank {
     }
     
     update(deltaTime) {
-        if (this.isDestroyed) return;
+        if (this.isDestroyed) {
+            console.log("Tank is destroyed, skipping update");
+            return;
+        }
         
         // Handle player movement
         if (this.isPlayer) {
-            let didMove = false;
+            // Calculate movement speeds
+            const moveSpeed = this.speed * deltaTime;
+            const turnSpeed = this.turnSpeed * deltaTime;
+            
+            // Store current position for debugging
+            const startPos = this.tank.position.clone();
+            
             // Forward/backward movement
             if (this.movement.forward) {
-                this.tank.translateZ(this.speed * deltaTime);
-                didMove = true;
+                // Create direction vector in tank's forward direction
+                const direction = new THREE.Vector3(0, 0, 1);
+                direction.applyQuaternion(this.tank.quaternion);
+                
+                // Scale by speed
+                direction.multiplyScalar(moveSpeed);
+                
+                // Apply to position directly
+                this.tank.position.add(direction);
+                console.log("Moving forward:", direction, "New pos:", this.tank.position.clone());
             }
+            
             if (this.movement.backward) {
-                this.tank.translateZ(-this.speed * 0.6 * deltaTime); // Slower in reverse
-                didMove = true;
+                const direction = new THREE.Vector3(0, 0, -1);
+                direction.applyQuaternion(this.tank.quaternion);
+                direction.multiplyScalar(moveSpeed * 0.6); // Slower in reverse
+                this.tank.position.add(direction);
+                console.log("Moving backward:", direction, "New pos:", this.tank.position.clone());
             }
             
             // Left/right rotation (tank body)
             if (this.movement.left) {
-                this.tank.rotateY(this.turnSpeed * deltaTime);
-                didMove = true;
+                this.tank.rotation.y += turnSpeed;
+                console.log("Rotating left:", turnSpeed, "New rotation:", this.tank.rotation.y);
             }
+            
             if (this.movement.right) {
-                this.tank.rotateY(-this.turnSpeed * deltaTime);
-                didMove = true;
+                this.tank.rotation.y -= turnSpeed;
+                console.log("Rotating right:", turnSpeed, "New rotation:", this.tank.rotation.y);
+            }
+            
+            // Check if position actually changed
+            if (!startPos.equals(this.tank.position)) {
+                console.log("Position changed from", startPos, "to", this.tank.position.clone());
             }
             
             // Turret rotation independent of tank body
             if (this.movement.turretLeft) {
                 this.turret.rotateY(this.turnSpeed * 1.5 * deltaTime);
                 this.cannon.rotateY(this.turnSpeed * 1.5 * deltaTime);
-                didMove = true;
             }
             if (this.movement.turretRight) {
                 this.turret.rotateY(-this.turnSpeed * 1.5 * deltaTime);
                 this.cannon.rotateY(-this.turnSpeed * 1.5 * deltaTime);
-                didMove = true;
             }
             
             // Log movement approximately every 30 frames
@@ -208,7 +233,7 @@ class Tank {
                     backward: this.movement.backward,
                     left: this.movement.left,
                     right: this.movement.right,
-                    moved: didMove
+                    moved: this.movement.forward || this.movement.backward || this.movement.left || this.movement.right
                 });
             }
         } else {
@@ -232,8 +257,7 @@ class Tank {
             }
         }
         
-        // Ensure tank stays on the ground (basic implementation)
-        // In a more complex game, we would use raycasting to follow terrain
+        // Ensure tank stays on the ground
         this.tank.position.y = 0.5;
     }
     

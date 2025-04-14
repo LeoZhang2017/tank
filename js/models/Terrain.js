@@ -194,10 +194,11 @@ class Terrain {
     
     createMinecraftTrees() {
         // Create some Minecraft-style trees
-        const treeCount = 30; // Fewer trees for performance
+        const treeCount = 30;
+        
+        // Initialize tree tracking array - this is critical for collision detection
         this.trees = [];
         
-        // Positions for trees
         for (let i = 0; i < treeCount; i++) {
             // Random position on the map
             let x, z, y;
@@ -250,7 +251,23 @@ class Terrain {
             leaves.position.set(x, y + 6.5, z); // Position above trunk
             this.scene.add(leaves);
             this.trees.push(leaves);
+            
+            // Store EACH tree trunk with a larger collision radius
+            this.trees.push({
+                position: new THREE.Vector3(x, 0, z), // Use ground level for collision
+                radius: 2.0, // Make this larger than visual trunk size
+                type: 'tree'
+            });
+            
+            // Also add this to obstacles array for unified collision checking
+            this.obstacles.push({
+                position: new THREE.Vector3(x, 0, z),
+                radius: 2.0,
+                userData: { type: 'tree' }
+            });
         }
+        
+        console.log(`Added ${this.trees.length} trees to collision system`);
     }
     
     createBoundary() {
@@ -677,5 +694,26 @@ class Terrain {
                 }
             }
         }
+    }
+    
+    // Add a dedicated method to check tree collisions with a larger buffer
+    isPositionInsideTree(position, radius = 0) {
+        if (!this.trees || this.trees.length === 0) return false;
+        
+        for (const tree of this.trees) {
+            // Check horizontal distance only (x/z plane)
+            const dx = position.x - tree.position.x;
+            const dz = position.z - tree.position.z;
+            const distSquared = dx * dx + dz * dz;
+            
+            // Use squared distance for performance
+            const minDistSquared = Math.pow(tree.radius + radius, 2);
+            
+            if (distSquared < minDistSquared) {
+                return true; // Position is inside a tree
+            }
+        }
+        
+        return false; // Position is not inside any tree
     }
 }
